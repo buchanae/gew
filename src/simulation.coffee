@@ -2,8 +2,11 @@ class Simulation
   constructor: (opts) ->
 
     default_config =
-      rate: 1000
+      rate: 1
       max_days: 250
+      board:
+        width: 300
+        height: 300
 
     @config = extend({}, default_config, opts)
 
@@ -12,19 +15,17 @@ class Simulation
     @board = new Board(@config.board.width, @config.board.height)
 
   start: ->
-    if @day < @config.max_days
-      cb = () =>
-        @day += 1
+    cb = () =>
+      if @day >= @config.max_days
+        @stop()
+        $(this).trigger('end')
+      else
         $(this).trigger('pre-tick')
         @tick()
         $(this).trigger('post-tick')
 
-        if @day > @config.max_days
-          @stop
-          $(this).trigger('end')
-
-      cb()
-      @interval_id = setInterval(cb, @config.rate)
+    cb()
+    @interval_id = setInterval(cb, 1000 / @config.rate)
 
   stop: ->
     clearInterval(@interval_id)
@@ -35,3 +36,4 @@ class Simulation
   toggle: -> if @running() then @stop() else @start()
 
   tick: ->
+    @day += 1

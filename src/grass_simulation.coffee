@@ -3,7 +3,7 @@ spawner = (klass, board, min_age, max_made, max_made_per_spawn, max_radius) ->
   remaining = max_made
     
   () ->
-    if @age > min_age
+    if @age < min_age
       return []
 
     possible = Math.min(max_made_per_spawn, remaining)
@@ -17,6 +17,28 @@ spawner = (klass, board, min_age, max_made, max_made_per_spawn, max_radius) ->
       m.location = board.random_point_near(@location, r)
       m
 
+
+fixed_cycle_spawner = (klass, board, min_age, cycle, count, max_radius) ->
+  () ->
+    if @age < min_age or @age % cycle != 0
+      return []
+
+    for i in [0..count]
+      r = Random::int(1, max_radius)
+      m = new klass
+      m.location = board.random_point_near(@location, r)
+      m
+
+spawn_at_age = (klass, board, age, count, radius) ->
+  () ->
+    if @age != age
+      return []
+
+    for i in [0..count]
+      r = Random::int(1, radius)
+      m = new klass
+      m.location = board.random_point_near(@location, r)
+      m
 
 random_mover = (board, direction_change_chance, max_radius) ->
   () ->
@@ -33,7 +55,7 @@ linear_mover = (board, distance) ->
     @location[1] += dy
 
 
-chance_doer = (func, chance) ->
+chance_doer = (chance, func) ->
   (args...) ->
     func.apply(this, args) if Random::chance(chance)
   
@@ -43,21 +65,18 @@ class GrassSimulation extends Simulation
   constructor: (opts) ->
 
     default_config =
-      rate: 1000
-      max_days: 500
-      board:
-        width: 300
-        height: 300
+      rate: 4
       elk:
-        initial_count:20
+        initial_count: 20
         move_radius: 1
         move_chance: 0.5
       grass:
         initial_count: 500
-        max_age: 50
+        max_age: 30
         spawn:
-          min_age: 25
-          chance: 0.01
+          min_age: 20
+          chance: 0.2
+          cycle: 5
           max_made: 25
           max_made_per_spawn: 5
           max_radius: 20
@@ -79,8 +98,11 @@ class GrassSimulation extends Simulation
     class Grass extends Base
       constructor: ->
         super()
-        @spawn = chance_doer(spawner(Grass, b, s.min_age, s.max_made
-                                   , s.max_made_per_spawn, s.max_radius))
+        #@spawn = chance_doer(s.chance, spawner(Grass, b, s.min_age, s.max_made
+        #                                     , s.max_made_per_spawn, s.max_radius))
+        #@spawn = fixed_cycle_spawner(Grass, b, s.min_age, s.cycle
+        #                           , s.max_made_per_spawn, s.max_radius)
+        @spawn = chance_doer(s.chance, spawn_at_age(Grass, b, s.min_age, s.max_made_per_spawn, s.max_radius))
 
     @grasses = for i in [0..@config.grass.initial_count]
       g = new Grass
@@ -92,11 +114,13 @@ class GrassSimulation extends Simulation
     class Elk extends Base
       constructor: ->
         super()
-        @move = chance_doer(linear_mover(b, e.move_radius), e.move_chance)
+        @move = chance_doer(e.move_chance, linear_mover(b, e.move_radius))
     
     @elk = (new Elk for i in [0..@config.elk.initial_count])
 
   tick: ->
+    super()
+
     next_grasses = []
 
     for grass in @grasses
