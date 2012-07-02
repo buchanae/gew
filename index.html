@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+  </head>
+  <body>
+    <canvas id='board'></canvas>
+    <div id='playback'>
+      <button id='start-stop'>Start / Stop</button>
+      Day: <span id='day'>0</span>
+    </div>
+
+    <script src='js/jquery.js'   type='text/javascript'></script>
+    <script src='js/app.js'      type='text/javascript'></script>
+
+    <script type='text/javascript'>
+      var g = new GrassSimulation;
+      var v = new GrassSimulationView(g, $('#board'), $('#playback'));
+    </script>
+  </body>
+</html>
