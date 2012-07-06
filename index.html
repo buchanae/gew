@@ -8,13 +8,29 @@
       <button id='start-stop'>Start / Stop</button>
       Day: <span id='day'>0</span>
     </div>
+    <canvas id='smoothie'></canvas>
 
-    <script src='js/jquery.js'   type='text/javascript'></script>
-    <script src='js/app.js'      type='text/javascript'></script>
+    <script src='js/jquery.js'     type='text/javascript'></script>
+    <script src='js/smoothie.js'   type='text/javascript'></script>
+    <script src='js/app.js'        type='text/javascript'></script>
 
     <script type='text/javascript'>
       var g = new GrassSimulation;
       var v = new GrassSimulationView(g, $('#board'), $('#playback'));
+
+      var smoothie = new SmoothieChart();
+      smoothie.streamTo($('#smoothie')[0], 500);
+
+      var line1 = new TimeSeries();
+      smoothie.addTimeSeries(line1, { strokeStyle: 'green' });
+
+      var line2 = new TimeSeries();
+      smoothie.addTimeSeries(line2, { strokeStyle: 'blue' });
+
+      setInterval(function() {
+        line1.append(new Date().getTime(), g.grasses.length);
+        line2.append(new Date().getTime(), g.elk.length);
+      }, 500);
     </script>
   </body>
 </html>
